@@ -2,6 +2,8 @@
 
 A lightweight logging service with a web-based dashboard for viewing and searching logs.
 
+**Note:** This service is designed to run locally on your development machine. It is not intended for production deployment or public exposure.
+
 ## Features
 
 - **HTTP API** for receiving logs from any application
