@@ -34,6 +34,7 @@ const ReactJson = dynamic(() => import('@microlink/react-json-view'), {
 
 interface Log {
   id: number;
+  level: 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR';
   origin: string | null;
   message: string;
   payload: any;
@@ -120,6 +121,15 @@ export default function LogsPage() {
 
     return () => clearTimeout(timer);
   }, [searchTerm, hasPayloadFilter, page, limit, fetchLogs]);
+
+  // Auto-refresh logs every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchLogs();
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [fetchLogs]);
 
   const handleReset = () => {
     setSearchTerm('');
@@ -239,6 +249,7 @@ export default function LogsPage() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[180px]">Created At</TableHead>
+              <TableHead className="w-[100px]">Level</TableHead>
               <TableHead className="w-[150px]">Origin</TableHead>
               <TableHead>Message</TableHead>
               <TableHead className="w-[200px]">Payload</TableHead>
@@ -247,7 +258,7 @@ export default function LogsPage() {
           <TableBody>
             {loading && logs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-12">
+                <TableCell colSpan={5} className="text-center py-12">
                   <div className="flex justify-center">
                     <span className="loader"></span>
                   </div>
@@ -255,7 +266,7 @@ export default function LogsPage() {
               </TableRow>
             ) : logs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-12">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
                   No logs found
                 </TableCell>
               </TableRow>
@@ -276,6 +287,16 @@ export default function LogsPage() {
                       hour: '2-digit',
                       minute: '2-digit'
                     })}
+                  </TableCell>
+                  <TableCell>
+                    <span className={`text-xs font-medium px-3 py-1 rounded-full ${
+                      log.level === 'ERROR' ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400' :
+                      log.level === 'WARNING' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400' :
+                      log.level === 'DEBUG' ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400' :
+                      'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400'
+                    }`}>
+                      {log.level.charAt(0) + log.level.slice(1).toLowerCase()}
+                    </span>
                   </TableCell>
                   <TableCell>{log.origin || '-'}</TableCell>
                   <TableCell className="max-w-md truncate">{log.message}</TableCell>
@@ -349,8 +370,21 @@ export default function LogsPage() {
             <DialogTitle>Log Details - ID: {selectedLog?.id}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 items-start">
-            {/* Origin and Created At in one row */}
+            {/* Level, Origin and Created At in one row */}
             <div className="flex gap-4">
+              <div className="flex-1">
+                <h3 className="text-sm text-muted-foreground mb-1">Level</h3>
+                <p className="text-sm">
+                  <span className={`text-xs font-medium px-3 py-1 rounded-full ${
+                    selectedLog?.level === 'ERROR' ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400' :
+                    selectedLog?.level === 'WARNING' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400' :
+                    selectedLog?.level === 'DEBUG' ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400' :
+                    'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400'
+                  }`}>
+                    {selectedLog?.level.charAt(0) + selectedLog?.level.slice(1).toLowerCase()}
+                  </span>
+                </p>
+              </div>
               <div className="flex-1">
                 <h3 className="text-sm text-muted-foreground mb-1">Origin</h3>
                 <p className="text-sm">{selectedLog?.origin || 'N/A'}</p>

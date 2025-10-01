@@ -6,21 +6,22 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (req.method === 'POST') {
     try {
-      const { origin, message, payload }: CreateLogInput = req.body;
+      const { level, origin, message, payload }: CreateLogInput = req.body;
 
       if (!message) {
         return res.status(400).json({ error: 'Message is required' });
       }
 
       const stmt = db.prepare(
-        'INSERT INTO logs (origin, message, payload) VALUES (?, ?, ?)'
+        'INSERT INTO logs (level, origin, message, payload) VALUES (?, ?, ?, ?)'
       );
 
       const payloadStr = payload ? JSON.stringify(payload) : null;
-      const result = stmt.run(origin || null, message, payloadStr);
+      const result = stmt.run(level || 'INFO', origin || null, message, payloadStr);
 
       return res.status(201).json({
         id: result.lastInsertRowid,
+        level: level || 'INFO',
         origin: origin || null,
         message,
         payload: payload || null,

@@ -45,6 +45,7 @@ Create a new log entry.
 **Request Body:**
 ```json
 {
+  "level": "INFO",              // optional: DEBUG | INFO | WARNING | ERROR (default: INFO)
   "origin": "my-app",           // optional: source/category of the log
   "message": "Something happened", // required: log message
   "payload": { "key": "value" }    // optional: any JSON data
@@ -55,6 +56,7 @@ Create a new log entry.
 ```json
 {
   "id": 1,
+  "level": "INFO",
   "origin": "my-app",
   "message": "Something happened",
   "payload": { "key": "value" }
@@ -98,14 +100,18 @@ Delete all logs.
 See [sample-sdk.ts](./sample-sdk.ts) for a ready-to-use logging SDK that integrates with this service.
 
 ```typescript
-import { Logger } from './sample-sdk';
+import { createLogger } from './sample-sdk';
+
+// Create a logger for your module/file
+const logger = createLogger('UserService');
 
 // Simple logging
-Logger.info('User logged in');
-Logger.error('Payment failed', 'request');
+logger.info('User logged in');
+logger.error('Payment failed');
 
 // With structured data
-Logger.debug({ userId: 123, action: 'click' }, 'CEL');
+logger.debug('Button clicked', { userId: 123, action: 'click' });
+logger.warn('High memory usage', { usage: '85%' });
 ```
 
 ## Dashboard Features
