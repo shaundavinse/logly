@@ -38,7 +38,7 @@ interface Log {
   origin: string | null;
   message: string;
   payload: any;
-  created_at: string;
+  created_at: number;
 }
 
 interface LogsResponse {
@@ -248,7 +248,7 @@ export default function LogsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[180px]">Created At</TableHead>
+              <TableHead className="w-[180px]">Timestamp</TableHead>
               <TableHead className="w-[100px]">Level</TableHead>
               <TableHead className="w-[150px]">Origin</TableHead>
               <TableHead>Message</TableHead>
@@ -285,7 +285,9 @@ export default function LogsPage() {
                     })}{' '}
                     {new Date(log.created_at).toLocaleTimeString('en-GB', {
                       hour: '2-digit',
-                      minute: '2-digit'
+                      minute: '2-digit',
+                      second: '2-digit',
+                      fractionalSecondDigits: 3
                     })}
                   </TableCell>
                   <TableCell>
@@ -390,10 +392,19 @@ export default function LogsPage() {
                 <p className="text-sm">{selectedLog?.origin || 'N/A'}</p>
               </div>
               <div className="flex-1">
-                <h3 className="text-sm text-muted-foreground mb-1">Created At</h3>
+                <h3 className="text-sm text-muted-foreground mb-1">Timestamp</h3>
                 <p className="text-sm">
                   {selectedLog?.created_at
-                    ? new Date(selectedLog.created_at).toLocaleString()
+                    ? new Date(selectedLog.created_at).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      }) + ' ' + new Date(selectedLog.created_at).toLocaleTimeString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        fractionalSecondDigits: 3
+                      })
                     : 'N/A'}
                 </p>
               </div>

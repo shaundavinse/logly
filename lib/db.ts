@@ -18,7 +18,7 @@ export function getDb(): Database.Database {
         origin TEXT,
         message TEXT NOT NULL,
         payload TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at INTEGER DEFAULT (CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER))
       )
     `);
 
@@ -38,7 +38,7 @@ export interface Log {
   origin: string | null;
   message: string;
   payload: string | null;
-  created_at: string;
+  created_at: number;
 }
 
 export interface CreateLogInput {
