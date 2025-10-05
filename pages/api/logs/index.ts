@@ -2,13 +2,57 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getDb, Log, CreateLogInput } from '@/lib/db';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Add CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   const db = getDb();
 
   if (req.method === 'POST') {
     try {
-      const { level, origin, message, payload }: CreateLogInput = req.body;
+      // Parse body if it's a string
+      let body = req.body;
+      if (typeof body === 'string') {
+        try {
+          body = JSON.parse(body);
+        } catch (parseError) {
+          // Log the parse error
+          const stmt = db.prepare(
+            'INSERT INTO logs (level, origin, message, payload) VALUES (?, ?, ?, ?)'
+          );
+
+          const errorPayload = JSON.stringify({
+            error: 'Invalid JSON in request body',
+            receivedBody: body,
+          });
+
+          stmt.run('ERROR', 'logly-api', 'Failed log request: Invalid JSON', errorPayload);
+
+          return res.status(400).json({ error: 'Invalid JSON in request body' });
+        }
+      }
+
+      const { level, origin, message, payload }: CreateLogInput = body;
 
       if (!message) {
+        // Log the failed request as an ERROR entry
+        const stmt = db.prepare(
+          'INSERT INTO logs (level, origin, message, payload) VALUES (?, ?, ?, ?)'
+        );
+
+        const errorPayload = JSON.stringify({
+          error: 'Message is required',
+          receivedBody: body,
+        });
+
+        stmt.run('ERROR', origin || 'logly-api', 'Failed log request: Message is required', errorPayload);
+
         return res.status(400).json({ error: 'Message is required' });
       }
 
@@ -28,6 +72,23 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     } catch (error) {
       console.error('Error creating log:', error);
+
+      // Log the error as an ERROR entry
+      try {
+        const stmt = db.prepare(
+          'INSERT INTO logs (level, origin, message, payload) VALUES (?, ?, ?, ?)'
+        );
+
+        const errorPayload = JSON.stringify({
+          error: error instanceof Error ? error.message : 'Unknown error',
+          receivedBody: typeof req.body === 'string' ? req.body : JSON.stringify(req.body),
+        });
+
+        stmt.run('ERROR', 'logly-api', 'Failed to create log entry', errorPayload);
+      } catch (logError) {
+        console.error('Failed to log error:', logError);
+      }
+
       return res.status(500).json({ error: 'Failed to create log' });
     }
   } else if (req.method === 'GET') {
